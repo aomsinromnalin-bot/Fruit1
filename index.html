@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachable Machine - Image Classification</title>
-    <!-- นำเข้าฟอนต์ Prompt จาก Google Fonts เพื่อความสวยงาม -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Teachable Machine - Image Classifier</title>
+    <!-- นำเข้าฟอนต์ภาษาไทย Prompt จาก Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
+        /* ตั้งค่าพื้นฐานของหน้าเว็บ */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -24,220 +26,25 @@
             color: #333;
         }
 
-        .card {
+        /* กล่องคอนเทนเนอร์หลัก */
+        .container {
             background: #ffffff;
             width: 100%;
             max-width: 480px;
+            padding: 35px 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 24px;
             font-weight: 600;
             color: #1e293b;
             margin-bottom: 8px;
         }
 
         p.subtitle {
-            font-size: 0.9rem;
+            font-size: 14px;
             color: #64748b;
-            margin-bottom: 24px;
-        }
-
-        /* สถานะการโหลดโมเดล */
-        #status {
-            font-size: 0.85rem;
-            padding: 8px 16px;
-            border-radius: 50px;
-            background-color: #fef3c7;
-            color: #d97706;
-            display: inline-block;
-            margin-bottom: 20px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        #status.ready {
-            background-color: #dcfce7;
-            color: #15803d;
-        }
-
-        /* ซ่อน input file เดิม */
-        #image-upload {
-            display: none;
-        }
-
-        /* ตกแต่งปุ่ม Upload */
-        .upload-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: #3b82f6;
-            color: white;
-            font-size: 1rem;
-            font-weight: 500;
-            padding: 12px 28px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .upload-btn:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-        }
-
-        .upload-btn:active {
-            transform: translateY(0);
-        }
-
-        .upload-btn.disabled {
-            background: #94a3b8;
-            box-shadow: none;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        /* พื้นที่แสดงรูปภาพตัวอย่าง */
-        .preview-box {
-            margin: 24px auto;
-            width: 100%;
-            height: 260px;
-            border: 2px dashed #cbd5e1;
-            border-radius: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            background-color: #f8fafc;
-            position: relative;
-        }
-
-        .preview-box img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            display: none;
-            border-radius: 12px;
-        }
-
-        .placeholder-text {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        /* ส่วนแสดงผลลัพธ์การทำนาย */
-        #label-container {
-            margin-top: 20px;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .prediction-item {
-            background: #f8fafc;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .prediction-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.95rem;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: #334155;
-        }
-
-        .progress-bg {
-            width: 100%;
-            height: 8px;
-            background: #e2e8f0;
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #3b82f6;
-            border-radius: 999px;
-            transition: width 0.4s ease;
-        }
-
-        /* ไฮไลต์คลาสที่มีโอกาสสูงสุด */
-        .prediction-item.top-match {
-            background: #eff6ff;
-            border-color: #93c5fd;
-        }
-        .prediction-item.top-match .progress-fill {
-            background: #10b981;
-        }
-        .prediction-item.top-match .prediction-header {
-            color: #065f46;
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="card">
-        <h1>ระบบวิเคราะห์รูปภาพ AI</h1>
-        <p class="subtitle">อัปโหลดรูปภาพ 1 ภาพเพื่อประมวลผลด้วย Teachable Machine</p>
-
-        <!-- แจ้งเตือนสถานะโมเดล -->
-        <div id="status">กำลังโหลดโมเดล AI กรุณารอสักครู่...</div>
-
-        <!-- ปุ่มอัปโหลดไฟล์ -->
-        <div>
-            <label for="image-upload" id="upload-label" class="upload-btn disabled">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                </svg>
-                อัปโหลดรูปภาพ (Upload)
-            </label>
-            <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
-        </div>
-
-        <!-- กล่องแสดงภาพตัวอย่าง -->
-        <div class="preview-box">
-            <span class="placeholder-text" id="placeholder-text">ภาพตัวอย่างจะแสดงที่นี่</span>
-            <img id="image-preview" alt="Uploaded Image Preview">
-        </div>
-
-        <!-- กล่องแสดงผลลัพธ์ -->
-        <div id="label-container"></div>
-    </div>
-
-    <!-- นำเข้าไลบรารี TensorFlow.js และ Teachable Machine -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-    
-    <script type="text/javascript">
-        // ลิงก์โมเดลจากโค้ดเดิมของคุณ
-        const URL = "https://teachablemachine.withgoogle.com/models/Zrya_ktnG/";
-
-        let model, labelContainer, maxPredictions;
-
-        // โหลดโมเดลอัตโนมัติทันทีที่เปิดหน้าเว็บ
-        async function loadModel() {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
-
-            try {
-                model = await tmImage.load(modelURL, metadataURL);
-                maxPredictions = model.getTotalClasses();
-
-                // อัปเดตสถานะเมื่อโหลดเสร็จ
-                const statusEl = document.getElementById("status");
-                statusEl.innerText = "✓ โมเดลพร้อมใช้งานแล้ว";
-                statusEl.classList.add("ready");
-
-                // เปิดใช้งานปุ่ม Upload
-                document.getElementById("upload-label
+            margin-bottom
